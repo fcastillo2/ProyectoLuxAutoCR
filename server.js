@@ -29,6 +29,8 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
+const ADMIN_KEY = process.env.ADMIN_KEY;
+
 const HORARIOS_PERMITIDOS = [
     "16:30",
     "17:00",
@@ -55,7 +57,8 @@ app.use(express.json({
 app.use(cors({
     origin: [
         "https://luxautocr.com",
-        "https://www.luxautocr.com"
+        "https://www.luxautocr.com",
+        "http://localhost:3000"
     ]
 }));
 
@@ -90,6 +93,27 @@ app.use(
         path.join(__dirname, "img")
     )
 );
+
+// ==========================================
+// ARCHIVOS PÚBLICOS DEL ADMINISTRADOR
+// ==========================================
+
+app.get("/admin", (req, res) => {
+
+    res.sendFile(
+        path.join(__dirname, "admin.html")
+    );
+
+});
+
+
+app.get("/admin.js", (req, res) => {
+
+    res.sendFile(
+        path.join(__dirname, "admin.js")
+    );
+
+});
 
 
 // ==========================================
@@ -143,6 +167,22 @@ function horaAMinutos(hora) {
     return (horas * 60) + minutos;
 }
 
+// ==========================================
+// PREPARAR VALORES PARA CSV
+// ==========================================
+
+function escaparCSV(valor) {
+
+    // Convertimos cualquier valor a texto
+    const texto = String(valor ?? "");
+
+    // Las comillas dobles internas deben duplicarse
+    const textoEscapado =
+        texto.replace(/"/g, '""');
+
+    // Rodeamos el valor con comillas dobles
+    return `"${textoEscapado}"`;
+}
 
 // ==========================================
 // RUTA DE PRUEBA
@@ -561,6 +601,168 @@ app.post("/api/reservas", (req, res) => {
         });
 
 });
+
+// ==========================================
+// VALIDAR ACCESO DE ADMINISTRADOR
+// ==========================================
+
+function verificarAdministrador(req, res, next) {
+
+    // Obtenemos la clave enviada
+    // mediante el encabezado HTTP
+    const claveRecibida =
+        req.get("X-Admin-Key");
+
+
+    // Verificamos que exista una clave
+    // configurada en el servidor
+    if (!ADMIN_KEY) {
+
+        console.error(
+            "ADMIN_KEY no está configurada."
+        );
+
+        return res.status(500).json({
+            exito: false,
+            mensaje:
+                "La configuración administrativa no está disponible."
+        });
+
+    }
+
+
+    // Comparamos la clave recibida
+    // con la almacenada en el servidor
+    if (claveRecibida !== ADMIN_KEY) {
+
+        return res.status(401).json({
+            exito: false,
+            mensaje:
+                "Acceso no autorizado."
+        });
+
+    }
+
+
+    // La clave es correcta.
+    // Permitimos continuar a la siguiente función.
+    next();
+
+}
+
+// ==========================================
+// DESCARGAR RESERVAS EN CSV
+// ==========================================
+
+app.get(
+    "/api/admin/reservas/csv",
+    verificarAdministrador,
+    async (req, res) => {
+
+        try {
+
+            // ======================================
+            // LEER RESERVAS
+            // ======================================
+
+            const contenido =
+                await fs.promises.readFile(
+                    rutaReservas,
+                    "utf8"
+                );
+
+            const datos =
+                JSON.parse(contenido);
+
+
+            // ======================================
+            // CREAR ENCABEZADOS DEL CSV
+            // ======================================
+
+            const filas = [
+                [
+                    "Nombre",
+                    "Vehículo",
+                    "Fecha",
+                    "Hora"
+                ]
+            ];
+
+
+            // ======================================
+            // AGREGAR RESERVAS
+            // ======================================
+
+            datos.reservas.forEach((reserva) => {
+
+                filas.push([
+                    reserva.nombre,
+                    reserva.vehiculo,
+                    reserva.fecha,
+                    reserva.hora
+                ]);
+
+            });
+
+
+            // ======================================
+            // CONVERTIR FILAS A CSV
+            // ======================================
+
+            const csv = filas
+                .map((fila) => {
+
+                    return fila
+                        .map(escaparCSV)
+                        .join(",");
+
+                })
+                .join("\r\n");
+
+
+            // ======================================
+            // CONFIGURAR RESPUESTA
+            // ======================================
+
+            res.setHeader(
+                "Content-Type",
+                "text/csv; charset=utf-8"
+            );
+
+            res.setHeader(
+                "Content-Disposition",
+                'attachment; filename="reservas-luxauto.csv"'
+            );
+
+
+            // ======================================
+            // ENVIAR ARCHIVO
+            // ======================================
+
+            res.send("\uFEFF" + csv);
+
+        }
+        catch (error) {
+
+            console.error(
+                "Error generando CSV:",
+                error
+            );
+
+
+            if (!res.headersSent) {
+
+                res.status(500).json({
+                    exito: false,
+                    mensaje:
+                        "No fue posible generar el archivo de reservas."
+                });
+
+            }
+
+        }
+
+    });
 
 
 // ==========================================
