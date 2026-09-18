@@ -1,0 +1,51 @@
+:root {
+    --lux-negro: #0b0b0b;
+    --lux-negro-claro: #181818;
+
+    --lux-dorado: #d4af37;
+    --lux-dorado-claro: #f0d77a;
+
+    --lux-plateado: #c5c5c5;
+    --lux-blanco: #f8f9fa;
+}
+body {
+    background-color: var(--lux-negro);
+    color: var(--lux-blanco);
+}
+
+.formulario-reserva {
+    max-width: 700px;
+
+    background-color: var(--lux-negro-claro);
+
+    border: 1px solid var(--lux-dorado);
+    border-radius: 15px;
+
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+}
+
+.titulo-dorado {
+    color: var(--lux-dorado);
+}
+
+.form-label {
+    color: var(--lux-plateado);
+}
+
+.form-control,
+.form-select {
+    background-color: #ffffff;
+}
+
+.btn-luxauto {
+    background-color: var(--lux-dorado);
+    color: #000000;
+
+    border: none;
+    font-weight: bold;
+}
+
+.btn-luxauto:hover {
+    background-color: var(--lux-dorado-claro);
+    color: #000000;
+}

@@ -1,0 +1,10 @@
+{
+    "reservas": [
+        {
+            "nombre": "Prueba",
+            "vehiculo": "Toyota Corolla",
+            "fecha": "2026-09-20",
+            "hora": "13:00"
+        }
+    ]
+}
