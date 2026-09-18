@@ -55,8 +55,7 @@ app.use(express.json({
 app.use(cors({
     origin: [
         "https://luxautocr.com",
-        "https://www.luxautocr.com",
-        "http://localhost:3000"
+        "https://www.luxautocr.com"
     ]
 }));
 
