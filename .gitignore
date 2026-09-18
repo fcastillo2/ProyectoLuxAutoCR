@@ -1,6 +1,2 @@
 node_modules/
 .env
-
-# Datos generados por la aplicación
-public/assets/reservas.json
-data/reservas.json
