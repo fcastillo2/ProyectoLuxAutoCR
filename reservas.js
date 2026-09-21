@@ -72,8 +72,8 @@ function horarioTieneCruce(horaSeleccionada, reservasDelDia) {
 
     const nuevoInicio = horaAMinutos(horaSeleccionada);
 
-    // Cada trabajo dura 2 horas
-    const nuevoFin = nuevoInicio + 120;
+    // Cada trabajo dura 1 hora
+    const nuevoFin = nuevoInicio + 60;
 
 
     return reservasDelDia.some((reserva) => {
@@ -82,7 +82,7 @@ function horarioTieneCruce(horaSeleccionada, reservasDelDia) {
             horaAMinutos(reserva.hora);
 
         const reservaFin =
-            reservaInicio + 120;
+            reservaInicio + 60;
 
 
         return (
@@ -127,6 +127,41 @@ async function actualizarHorariosDisponibles() {
 
         // Convertimos la respuesta del servidor a JSON
         const datos = await respuesta.json();
+
+        // ==================================
+        // CREAR OPCIONES SEGÚN EL DÍA
+        // ==================================
+
+        // Limpiamos las opciones anteriores
+        hora.innerHTML = "";
+
+
+        // Creamos nuevamente la opción inicial
+        const opcionInicial =
+            document.createElement("option");
+
+        opcionInicial.value = "";
+        opcionInicial.textContent =
+            "Seleccione una hora";
+
+        opcionInicial.selected = true;
+        opcionInicial.disabled = true;
+
+        hora.appendChild(opcionInicial);
+
+
+        // Creamos las horas enviadas por el servidor
+        datos.horariosPermitidos.forEach((horaPermitida) => {
+
+            const opcion =
+                document.createElement("option");
+
+            opcion.value = horaPermitida;
+            opcion.textContent = horaPermitida;
+
+            hora.appendChild(opcion);
+
+        });
 
 
         // Convertimos las horas ocupadas en objetos

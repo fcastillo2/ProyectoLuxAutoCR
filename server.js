@@ -31,7 +31,11 @@ const PORT = process.env.PORT || 3000;
 
 const ADMIN_KEY = process.env.ADMIN_KEY;
 
-const HORARIOS_PERMITIDOS = [
+// ==========================================
+// HORARIOS DE LUNES A VIERNES
+// ==========================================
+
+const HORARIOS_SEMANA = [
     "16:30",
     "17:00",
     "17:30",
@@ -44,6 +48,37 @@ const HORARIOS_PERMITIDOS = [
     "21:00",
     "21:30",
     "22:00"
+];
+
+
+// ==========================================
+// HORARIOS DE SÁBADO Y DOMINGO
+// ==========================================
+
+const HORARIOS_FIN_SEMANA = [
+    "07:00",
+    "07:30",
+    "08:00",
+    "08:30",
+    "09:00",
+    "09:30",
+    "10:00",
+    "10:30",
+    "11:00",
+
+    // 12:00 - 13:00: almuerzo
+
+    "13:00",
+    "13:30",
+    "14:00",
+    "14:30",
+    "15:00",
+    "15:30",
+    "16:00",
+    "16:30",
+    "17:00",
+    "17:30",
+    "18:00"
 ];
 
 let colaReservas = Promise.resolve();
@@ -149,6 +184,47 @@ function obtenerFechaActual() {
     return `${anio}-${mes}-${dia}`;
 }
 
+
+// ==========================================
+// OBTENER HORARIOS SEGÚN EL DÍA
+// ==========================================
+
+function obtenerHorariosPermitidos(fecha) {
+
+    // Separamos año, mes y día
+    const [anio, mes, dia] =
+        fecha.split("-").map(Number);
+
+
+    // Creamos la fecha en horario local
+    const fechaSeleccionada =
+        new Date(anio, mes - 1, dia);
+
+
+    // getDay():
+    // 0 = domingo
+    // 1 = lunes
+    // 2 = martes
+    // 3 = miércoles
+    // 4 = jueves
+    // 5 = viernes
+    // 6 = sábado
+    const diaSemana =
+        fechaSeleccionada.getDay();
+
+
+    // Sábado o domingo
+    if (diaSemana === 0 || diaSemana === 6) {
+
+        return HORARIOS_FIN_SEMANA;
+
+    }
+
+
+    // Lunes a viernes
+    return HORARIOS_SEMANA;
+
+}
 
 // ==========================================
 // CONVERTIR HORA A MINUTOS
@@ -267,8 +343,12 @@ app.get("/api/disponibilidad", async (req, res) => {
         // RESPUESTA
         // ======================================
 
+        const horariosPermitidos =
+            obtenerHorariosPermitidos(fecha);
+
         return res.json({
             fecha: fecha,
+            horariosPermitidos: horariosPermitidos,
             horariosOcupados: horariosOcupados
         });
 
@@ -424,7 +504,14 @@ async function procesarReserva(req, res) {
         // VALIDAR HORARIO
         // ======================================
 
-        if (!HORARIOS_PERMITIDOS.includes(hora)) {
+        // ======================================
+        // VALIDAR HORARIO
+        // ======================================
+
+        const horariosPermitidos =
+            obtenerHorariosPermitidos(fecha);
+
+        if (!horariosPermitidos.includes(hora)) {
 
             return res.status(400).json({
                 exito: false,
@@ -433,7 +520,6 @@ async function procesarReserva(req, res) {
             });
 
         }
-
 
         // ======================================
         // LEER RESERVAS EXISTENTES
@@ -458,9 +544,9 @@ async function procesarReserva(req, res) {
         const nuevoInicio =
             horaAMinutos(hora);
 
-        // Cada reserva dura 2 horas
+        // Cada reserva dura 1 hora
         const nuevoFin =
-            nuevoInicio + 120;
+            nuevoInicio + 60;
 
 
         // ======================================
@@ -483,7 +569,7 @@ async function procesarReserva(req, res) {
                     horaAMinutos(reserva.hora);
 
                 const reservaFin =
-                    reservaInicio + 120;
+                    reservaInicio + 60;
 
 
                 return (
